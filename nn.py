@@ -33,8 +33,8 @@ class ArtificialNeuralNetwork(object):
     neurons: int # Number of neurons in the input layer
     learning_rate: float  # Step
     # Matrixes
-    input_weights: np.array
-    output_weights: np.array
+    input_weight: np.array
+    output_weight: np.array
     bias_input_layer: np.array
     bias_output_layer: np.array
     layer_1: np.array  # Value of the output layer, before applying sigmoid.
@@ -56,13 +56,13 @@ class ArtificialNeuralNetwork(object):
         """
         Weights and bias for input layer.
         """
-        self.input_weights = np.random.random((self.dim,
+        self.input_weight = np.random.random((self.dim,
                                                self.neurons)) * 2.0 - 1.0
         self.bias_input_layer = np.random.random((self.neurons, 1))
         # self.bias_input_layer = np.zeros((self.neurons, 1))  # Without bias
 
     def get_output_layer(self):
-        self.output_weights = np.random.random((self.neurons, 1)) * 2.0 - 1.0
+        self.output_weight = np.random.random((self.neurons, 1)) * 2.0 - 1.0
         self.bias_output_layer = np.random.random((1, 1))
         # self.bias_output_layer = np.zeros((self.t, 1))  # Without bias
 
@@ -83,29 +83,45 @@ class ArtificialNeuralNetwork(object):
         self.get_layers()
 
         for iteration in range(self.max_iter):
-            output = self.predict(train_data)
-            self.adjust(train_target, output)
+            self.backward(train_data, train_target)
 
-    def adjust(self, train_target, output):
+    def backward(self, train_data, train_target):
         """
-        Adjust the weights after the prediction.
+        Adjust the weight after the prediction.
 
+        :param train_data:
         :param train_target:
-        :param output:
         :return:
         """
-        error = train_target - output
+        hidden_layer, output = self.forward(train_data)
+        error = output - train_target
+
+        # Adjust output layer
         output_delta = error * sigmoid_derivative(output)
+        adj_output = np.dot(hidden_layer.T, output_delta)
+        self.output_weight -= self.learning_rate * adj_output
+        self.bias_output_layer -= (self.learning_rate * output_delta).mean()
 
-        adj_output = np.dot(self.layer_1.T, output_delta)
-        self.output_weights += self.learning_rate * adj_output
-
-        hidden_delta = np.dot(output_delta, self.output_weights.T) * sigmoid_derivative(self.layer_1)
+        # Adjust hidden layer
+        hidden_delta = np.dot(output_delta, self.output_weight.T) * \
+                       sigmoid_derivative(hidden_layer)
         adj_hidden = np.dot(train_data.T, hidden_delta)
+        self.input_weight -= self.learning_rate * adj_hidden
+        self.bias_input_layer -= (self.learning_rate * hidden_delta).mean()
 
-        self.input_weights += self.learning_rate * adj_hidden
+    def forward(self, data):
+        """
+        Calculate the layers in the net when data is added.
 
-    # The neural network get_indicators.
+        :param data:
+        :return: both hidden and output layers.
+        """
+        z_1 = np.dot(data, self.input_weight) + self.bias_input_layer.T
+        layer_1 = sigmoid(z_1)
+        z_2 = np.dot(layer_1, self.output_weight) + self.bias_output_layer.T
+        output = sigmoid(z_2)
+        return layer_1, output
+
     def predict(self, test_data):
         """
         Predict value.
@@ -113,10 +129,7 @@ class ArtificialNeuralNetwork(object):
         :param test_data:
         :return:
         """
-        z_1 = np.dot(test_data, self.input_weights) + self.bias_input_layer.T
-        self.layer_1 = sigmoid(z_1)
-        z_2 = np.dot(self.layer_1, self.output_weights) + self.bias_output_layer.T
-        output = sigmoid(z_2)
+        _, output = self.forward(test_data)
         return output
 
 
@@ -139,7 +152,6 @@ if __name__ == "__main__":
     neural_network = ArtificialNeuralNetwork()
     neural_network.train(train_data=train_data,
                          train_target=train_target)
-
 
     # Test the neural network with a new situation.
     print("Testing data [1, 0, 0] = 1: ")
