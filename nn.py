@@ -54,13 +54,13 @@ class ArtificialNeuralNetwork:
         # self.bias_output_layer = np.random.random((self.t, 1))
         self.bias_output_layer = np.zeros((self.t, 1))
 
-    def train(self, x, y,
-              max_iter: int = 1000,
-              neurons: int = 10,
-              learning_rate: float = 1.0,
-              neuronal_fun='sigmoid'):
+    def initial(self, x, y,
+                max_iter,
+                neurons,
+                learning_rate,
+                neuronal_fun):
         """
-        Train the neural network with gradient descent.
+        Initialize the neural network layers.
 
         :param x: numpy.array with data (intances and features).
         :param y: numpy.array with the target to predict.
@@ -77,6 +77,29 @@ class ArtificialNeuralNetwork:
         self.activation = fun_dict[neuronal_fun]['activation']
         self.activation_der = fun_dict[neuronal_fun]['derivative']
         self.get_layers()
+        return self
+
+    def train(self, x, y,
+              max_iter: int = 1000,
+              neurons: int = 10,
+              learning_rate: float = 1.0,
+              neuronal_fun='sigmoid'):
+        """
+        Train the neural network with gradient descent.
+
+        :param x: numpy.array with data (intances and features).
+        :param y: numpy.array with the target to predict.
+        :param int max_iter: number of iterations for training.
+        :param int neurons: number of neurons in the hidden layer.
+        :param float learning_rate: step to add in each iteration.
+        :param str neuronal_fun: function for activation functions in neurons.
+        """
+        self.initial(x=x,
+                     y=y,
+                     max_iter=max_iter,
+                     neurons=neurons,
+                     learning_rate=learning_rate,
+                     neuronal_fun=neuronal_fun)
 
         for iteration in range(self.max_iter):
             # print('Iteration =', iteration)
