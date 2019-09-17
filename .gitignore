@@ -1,3 +1,4 @@
 # Folders
 env/
 .idea/
+__pycache__/
